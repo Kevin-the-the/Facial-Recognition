@@ -94,32 +94,26 @@
 <div class="container">
     <h1>Face Recognition Live Feed</h1>
 
-    <!-- Video feed section -->
     <img id="videoFeed" src="{{ url_for('video_feed') }}" alt="Live Feed">
 
-    <!-- Button to start/stop webcam -->
     <div class="start-stop-buttons">
         <button id="startButton" onclick="startCamera()">Start Camera</button>
         <button id="stopButton" onclick="stopCamera()" disabled>Stop Camera</button>
     </div>
 
-    <!-- Button to capture and check face -->
     <div class="button-container">
         <button onclick="captureFace()">Capture & Check</button>
     </div>
 
-    <!-- Result section -->
     <div class="result-container">
         <p id="result">No recognition yet</p>
         <img id="capturedImage" style="display:none;" src="" alt="Captured Image">
     </div>
 
-    <!-- Status message -->
     <div id="statusMessage" class="status-message"></div>
 </div>
 
 <script>
-    // Function to start the camera
     function startCamera() {
         fetch('/start_camera', {
             method: 'POST'
@@ -137,7 +131,6 @@
         });
     }
 
-    // Function to stop the camera
     function stopCamera() {
         fetch('/stop_camera', {
             method: 'POST'
@@ -155,7 +148,6 @@
         });
     }
 
-    // Function to capture and check face
     function captureFace() {
         fetch('/capture')
         .then(response => response.json())
