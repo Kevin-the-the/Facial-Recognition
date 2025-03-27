@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2b2b2b, #0f0f0f);
+            color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+
+        .container {
+            text-align: center;
+            background-color: #1c1c1c;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 850px;
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        #videoFeed {
+            margin-bottom: 30px;
+            width: 640px;
+            height: 480px;
+            border: 2px solid #444;
+            border-radius: 10px;
+        }
+
+        .button-container {
+            margin: 30px 0;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 28px;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 15px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+        }
+
+        .result-container {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        .result-container img {
+            width: 150px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .start-stop-buttons {
+            margin-bottom: 30px;
+        }
+
+        .status-message {
+            margin-top: 20px;
+            font-size: 20px;
+            color: #e2e2e2;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Face Recognition Live Feed</h1>
+
+    <!-- Video feed section -->
+    <img id="videoFeed" src="{{ url_for('video_feed') }}" alt="Live Feed">
+
+    <!-- Button to start/stop webcam -->
+    <div class="start-stop-buttons">
+        <button id="startButton" onclick="startCamera()">Start Camera</button>
+        <button id="stopButton" onclick="stopCamera()" disabled>Stop Camera</button>
+    </div>
+
+    <!-- Button to capture and check face -->
+    <div class="button-container">
+        <button onclick="captureFace()">Capture & Check</button>
+    </div>
+
+    <!-- Result section -->
+    <div class="result-container">
+        <p id="result">No recognition yet</p>
+        <img id="capturedImage" style="display:none;" src="" alt="Captured Image">
+    </div>
+
+    <!-- Status message -->
+    <div id="statusMessage" class="status-message"></div>
+</div>
+
+<script>
+    // Function to start the camera
+    function startCamera() {
+        fetch('/start_camera', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data.status);
+            document.getElementById('startButton').disabled = true;
+            document.getElementById('stopButton').disabled = false;
+            document.getElementById('statusMessage').innerText = 'Camera is now active.';
+        })
+        .catch(error => {
+            console.error('Error starting camera:', error);
+            document.getElementById('statusMessage').innerText = 'Failed to start camera. Please try again.';
+        });
+    }
+
+    // Function to stop the camera
+    function stopCamera() {
+        fetch('/stop_camera', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data.status);
+            document.getElementById('startButton').disabled = false;
+            document.getElementById('stopButton').disabled = true;
+            document.getElementById('statusMessage').innerText = 'Camera has been stopped.';
+        })
+        .catch(error => {
+            console.error('Error stopping camera:', error);
+            document.getElementById('statusMessage').innerText = 'Failed to stop camera. Please try again.';
+        });
+    }
+
+    // Function to capture and check face
+    function captureFace() {
+        fetch('/capture')
+        .then(response => response.json())
+        .then(data => {
+            const resultText = data.detected;
+            document.getElementById('result').innerText = `Detected: ${resultText}`;
+        })
+        .catch(error => {
+            console.error('Error capturing face:', error);
+            document.getElementById('result').innerText = 'Error capturing face. Please try again.';
+        });
+    }
+</script>
+
+</body>
+</html>
