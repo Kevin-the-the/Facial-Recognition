@@ -2,7 +2,7 @@ import cv2
 import face_recognition
 import os
 import numpy as np
-from flask import Flask, render_template, Response, jsonify
+from flask import Flask, render_template, Response, jsonify, request
 import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -11,9 +11,9 @@ import webbrowser
 
 app = Flask(__name__)
 
+database_path = "database"
 known_encodings = []
 known_names = []
-database_path = "database"
 
 def load_known_faces():
     global known_encodings, known_names
@@ -41,7 +41,7 @@ class FolderMonitor(FileSystemEventHandler):
     def on_created(self, event):
         if not event.is_directory:
             print(f"New file detected: {event.src_path}")
-            load_known_faces() 
+            load_known_faces()
 
 def start_folder_monitoring():
     observer = Observer()
@@ -49,15 +49,30 @@ def start_folder_monitoring():
     observer.schedule(event_handler, database_path, recursive=False)
     observer.start()
     print(f"Monitoring folder: {database_path}")
-
     try:
         while True:
-            time.sleep(1) 
+            time.sleep(1)
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
 
 threading.Thread(target=start_folder_monitoring, daemon=True).start()
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({"status": "No file part"}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"status": "No selected file"}), 400
+
+    if file:
+        filepath = os.path.join(database_path, file.filename)
+        file.save(filepath)
+        print(f"File {file.filename} uploaded successfully!")
+        load_known_faces()  # Reload the database with the new face
+        return jsonify({"status": f"File {file.filename} uploaded and processed!"}), 200
 
 video_capture = None
 
@@ -118,8 +133,6 @@ def capture_face():
     face_locations = face_recognition.face_locations(rgb_frame)
     face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
 
-    #***************CHANGE TOLERANCE TO ADJUST STRICTNESS, LOWER IS STRICTER********************
-
     for face_encoding in face_encodings:
         matches = face_recognition.compare_faces(known_encodings, face_encoding, tolerance=0.5)
         name = "Unknown"
@@ -138,4 +151,4 @@ def open_browser():
 
 if __name__ == "__main__":
     threading.Thread(target=open_browser, daemon=True).start()
-    app.run(host='0.0.0.0', port=3000, debug=True, use_reloader=False) 
+    app.run(host='0.0.0.0', port=3000, debug=True, use_reloader=False)
